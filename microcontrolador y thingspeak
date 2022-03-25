@@ -1,0 +1,89 @@
+#include <ESP8266WiFi.h> //Libreria Wifi
+
+int conteoR = 0;
+int y =0;
+unsigned long previousMillis = 0;
+
+// Wifi
+const char *ssid = "FAMILIA ESCQUIN";
+const char *password = "Miberta17";
+//Thingspeak
+const char* server = "184.106.153.149";
+String apiKey ="EN2LK8QZKJQKIEO0";
+
+//Envio de Datos
+void comunicacion(float puerta)
+{  
+   WiFiClient client;
+  
+   if (client.connect(server, 80)) { // usar 184.106.153.149 ó api.thingspeak.com
+   Serial.println("En Red");
+   
+   String postStr = apiKey;
+   postStr += "&field1=";
+   postStr += String(puerta);
+   postStr += "\r\n\r\n";
+   
+   client.print("POST /update HTTP/1.1\n");
+   client.print("Host: api.thingspeak.com\n");
+   client.print("Connection: close\n");
+   client.print("X-THINGSPEAKAPIKEY: " + apiKey + "\n");
+   client.print("Content-Type: application/x-www-form-urlencoded\n");
+   client.print("Content-Length: ");
+   client.print(postStr.length());
+   client.print("\n\n");
+   client.print(postStr);
+   delay(1000);
+   
+   }
+ client.stop();
+}
+
+void setup() {
+
+  Serial.begin(115200); //Comienza comunicacion
+  Serial.println("");
+
+  WiFi.begin(ssid, password); //ingresa datos de red
+  while (WiFi.status() != WL_CONNECTED and conteoR <50) 
+  { //Cuenta regresiva
+    ++conteoR;
+    delay(500);
+    Serial.print(".");
+  }
+  if (conteoR <50) {  //Intentamos conexion mientras no termine el conteo
+      //para usar con ip fija
+      IPAddress ip(192,168,1,156); 
+      IPAddress gateway(192,168,1,1); 
+      IPAddress subnet(255,255,255,0); 
+      WiFi.config(ip, gateway, subnet); 
+      
+      Serial.println("");
+      Serial.println("WiFi conectado");
+      Serial.println(WiFi.localIP());
+  }
+  else {   // De lo contrario se cancela la conexion
+      Serial.println("");
+      Serial.println("Error de conexion");
+  }
+}
+
+void loop() {
+
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= 1000) { //envia datos del LDR cada 3 segundos
+    previousMillis = currentMillis;
+    int analog = analogRead(A0);
+    y=map(analog, 170, 1024, 0, 100); //Graficamos en torno a porcentaje para que quede mejor visualmente 
+
+    Serial.print("Hay un ");
+    Serial.print(y);
+    Serial.println("% de Luz");
+    comunicacion(y);
+  }
+}
+BIBLIOGRAFÍA:
+Hoja de Datos Fotorresistor https://components101.com/sites/default/files/component_datasheet/LDR%20Datasheet.pdf
+
+Información sobre Nodemcu https://www.theengineeringprojects.com/2018/08/esp8266-pinout-datasheet-features-applications.html
