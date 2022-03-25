@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+key_write=CMOO9R3GFE5CNOLW
+
+Disco=($(/usr/bin/df . -h | grep "/dev/sda5" | awk '{print $4}'))
+/usr/bin/curl https://api.thingspeak.com/update?api_key=${key_write}\&field1=${Disco}          #codigo para disco duro
+
+sleep 17s #el sleep es para pasar de field y  enviar datos cada 17 segundos
+
+
+me=($(/usr/bin/free -h | grep "Memoria" | awk '{print $3}'))
+/usr/bin/curl https://api.thingspeak.com/update?api_key=${key_write}\&field2=${me}        #codigo para memoria ram 
+
+sleep 17s
+
+cod=($(/usr/bin/uptime | awk '{print $8}'))
+/usr/bin/curl https://api.thingspeak.com/update?api_key=${key_write}\&field1\&field2=${cod}       #este codigo nos permite ver la actualizacion de la grafica
+                                                                                                  #en el thingspeak cada minuto  
